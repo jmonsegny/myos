@@ -4,11 +4,11 @@ GlobalDescriptorTable::
 GlobalDescriptorTable()
 :nullSegmentDescriptor(0,0,0),
  unusedSegmentDescriptor(0,0,0),
- codeSegmentDescriptor(0,64*1024*1024,0x9A), 
- dataSegmentDescriptor(0,64*1024*1024,0x92)
+ codeSegmentDescriptor(0,64*1024*1024,0x9A), // 64 Mb 
+ dataSegmentDescriptor(0,64*1024*1024,0x92)  // 64 Mb
 {
 	uint32_t i[2];
-	i[0] = (uint32_t)this;
+	i[0] = (uint32_t)this; // 32 bits because it's a 32 bit OS
 	i[1] = sizeof(GlobalDescriptorTable) << 16;
 
 	asm volatile( "lgdt (%0)": :"p" (((uint8_t *)i)+2) );
@@ -21,7 +21,8 @@ GlobalDescriptorTable::
 
 uint16_t GlobalDescriptorTable::DataSegmentSelector()
 {
-	return (uint8_t*)&dataSegmentDescriptor - (uint8_t*)this;
+	return (uint8_t*)&dataSegmentDescriptor - (uint8_t*)this; 
+	// 8 bits because it's relative to the start of the GDT
 }
 
 uint16_t GlobalDescriptorTable::CodeSegmentSelector()
