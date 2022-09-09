@@ -8,8 +8,8 @@ GlobalDescriptorTable()
  dataSegmentDescriptor(0,64*1024*1024,0x92)  // 64 Mb
 {
 	uint32_t i[2];
-	i[0] = (uint32_t)this; // 32 bits because it's a 32 bit OS
-	i[1] = sizeof(GlobalDescriptorTable) << 16;
+	i[1] = (uint32_t)this; // 32 bits because it's a 32 bit OS			       
+	i[0] = sizeof(GlobalDescriptorTable) << 16;
 
 	asm volatile( "lgdt (%0)": :"p" (((uint8_t *)i)+2) );
 }

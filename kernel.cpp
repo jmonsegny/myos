@@ -1,5 +1,6 @@
 #include "types.h"
 #include "gdt.h"
+#include "interrupts.h"
 
 void printf( int8_t* str )
 {
@@ -45,6 +46,9 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 	printf( "Hello World! --- http://www.AlgorithMan.de\n" );
 
 	GlobalDescriptorTable gdt;
+	InterruptManager interrupts( &gdt );
+
+	interrupts.Activate();
 
 	while(1);
 }
