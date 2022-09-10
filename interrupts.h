@@ -1,15 +1,19 @@
 #ifndef __INTERRUPTS_H
-#define __INTERRRUTS_H
+#define __INTERRUPTS_H
 
 #include "types.h"
 #include "port.h"
 #include "gdt.h"
 
+class InterruptHandler;
+
 class InterruptManager
 {
+	friend class InterruptHandler;
 protected:
 
 	static InterruptManager* ActiveInterruptManager;
+	InterruptHandler* handlers[256];
 
 	struct GateDescriptor
 	{
@@ -55,5 +59,18 @@ public:
 	static void HandleInterruptRequest0x00();
 	static void HandleInterruptRequest0x01();
 };
+
+class InterruptHandler
+{
+protected:
+        uint8_t interruptNumber;
+        InterruptManager* interruptManager;
+
+        InterruptHandler( uint8_t interruptNumber, InterruptManager* interruptManager );
+        ~InterruptHandler();
+public:
+        virtual uint32_t HandleInterrupt( uint32_t esp );
+};
+
 
 #endif // __INTERRUPTS_H

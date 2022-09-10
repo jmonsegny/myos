@@ -2,6 +2,27 @@
 
 void printf( int8_t* s );
 
+InterruptHandler::
+InterruptHandler( uint8_t interruptNumber_, InterruptManager* interruptManager_ )
+{
+	interruptNumber = interruptNumber_;
+	interruptManager = interruptManager_;
+	interruptManager->handlers[interruptNumber] = this;
+}
+
+InterruptHandler::
+~InterruptHandler()
+{
+	if( interruptManager->handlers[interruptNumber] == this )
+		interruptManager->handlers[interruptNumber] = 0;
+}
+
+uint32_t InterruptHandler::
+HandleInterrupt( uint32_t esp )
+{
+	return esp;
+}
+
 InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];
 
 InterruptManager* InterruptManager::ActiveInterruptManager = 0;
@@ -34,8 +55,10 @@ picSlaveData(0xA1)
 	uint16_t CodeSegment = gdt->CodeSegmentSelector();
 	const uint8_t IDT_INTERRUPT_GATE = 0xE;
 
-	for( uint16_t i = 0; i < 256; i++ )
+	for( uint16_t i = 0; i < 256; i++ ) {
+		handlers[i] = 0;
 		SetInterruptDescriptorTableEntry(i, CodeSegment, &IgnoreInterruptRequest, 0, IDT_INTERRUPT_GATE );
+	}
 
 	SetInterruptDescriptorTableEntry(0x20, CodeSegment, &HandleInterruptRequest0x00, 0, IDT_INTERRUPT_GATE );
 	SetInterruptDescriptorTableEntry(0x21, CodeSegment, &HandleInterruptRequest0x01, 0, IDT_INTERRUPT_GATE );
@@ -96,8 +119,15 @@ handleInterrupt( uint8_t interruptNumber, uint32_t esp )
 uint32_t InterruptManager::
 DoHandleInterrupt( uint8_t interruptNumber, uint32_t esp )
 {
-	if( interruptNumber != 0x20 ) {
-		printf("INTERRUPT ");
+	if( handlers[interruptNumber] != 0 ) {
+		esp = handlers[interruptNumber]->HandleInterrupt( esp );
+	}
+	else if( interruptNumber != 0x20 ) {
+		static char* errtxt = "UNHANDLED INTERRUPT 0x00";
+		static char* hex = "0123456789ABCDEF";
+		errtxt[22] = hex[(interruptNumber >> 4) & 0xF];
+		errtxt[23] = hex[(interruptNumber >> 0) & 0xF];
+		printf( errtxt );
 	}
 
 	if( 0x20 <= interruptNumber && interruptNumber < 0x30 ) {
