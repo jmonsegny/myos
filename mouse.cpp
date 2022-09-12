@@ -2,37 +2,62 @@
 
 void printf( int8_t* );
 
+MouseEventHandler::
+MouseEventHandler()
+{
+}
+
+void MouseEventHandler::
+onMouseDown( uint8_t button)
+{
+}
+
+void MouseEventHandler::
+onMouseUp( uint8_t button )
+{
+}
+
+void MouseEventHandler::
+onMouseMove( int8_t xoff, int8_t yoff )
+{
+}
+
+void MouseEventHandler::
+onActivate( )
+{
+}
+
+
 MouseDriver::
-MouseDriver( InterruptManager* manager )
+MouseDriver( InterruptManager* manager, MouseEventHandler* handler )
 :InterruptHandler(0x2C,manager),
 dataport(0x60),
-commandport(0x64)	
+commandport(0x64)
 {
-	offset = 0;
-	buttons = 0;
-
-	static uint16_t* VideoMemory = (uint16_t*)0xB8000;
-
-	uint8_t x = 40, y = 12;
-        VideoMemory[80*y + x] = ((VideoMemory[80*y + x] & 0xF000) >> 4) |
-                                ((VideoMemory[80*y + x] & 0x0F00) << 4) |
-                                ((VideoMemory[80*y + x] & 0x00FF)     );
-
-	commandport.Write(0xAB); // activate
-	commandport.Write(0x20); // get curr state
-
-	uint8_t status = dataport.Read() | 2; // flip
-	commandport.Write(0x60); // set state
-	dataport.Write(status);
-
-	commandport.Write(0xD4);
-	dataport.Write(0xF4);
-	dataport.Read();
+	_handler = handler;
 }
 
 MouseDriver::
 ~MouseDriver()
 {
+}
+
+void MouseDriver::
+activate()
+{
+	offset = 0;
+    buttons = 0;
+
+    commandport.Write(0xAB); // activate
+    commandport.Write(0x20); // get curr state
+
+    uint8_t status = dataport.Read() | 2; // flip
+    commandport.Write(0x60); // set state
+    dataport.Write(status);
+
+    commandport.Write(0xD4);
+    dataport.Write(0xF4);
+    dataport.Read();
 }
 
 uint32_t MouseDriver::
@@ -44,39 +69,33 @@ HandleInterrupt( uint32_t esp )
 	if( !(status & 0x20) )
 		return	esp;
 
-	static int8_t x = 40, y = 12;
 	buffer[offset] = dataport.Read();
 	offset = (offset + 1) % 3;
 
-	if( offset == 0 /*&& !respond*/ ) {
-		static uint16_t* VideoMemory = (uint16_t*)0xB8000;
+	if(  _handler == 0 )
+        return  esp;
 
-		VideoMemory[80*y + x] = ((VideoMemory[80*y + x] & 0xF000) >> 4) |
-                                        ((VideoMemory[80*y + x] & 0x0F00) << 4) |
-                                        ((VideoMemory[80*y + x] & 0x00FF)     );
+	if( !(status & 0x20) || _handler == 0 )
+        return  esp;
 
-		x += buffer[1];
-		y -= buffer[2];
-		if( x < 0) x = 0;
-		if( x > 79) x = 79;
-		if( y < 0) y = 0;
-                if( y > 24) y = 24;
+	if( offset == 0 ) {
 
-		VideoMemory[80*y + x] = ((VideoMemory[80*y + x] & 0xF000) >> 4) |
-			                ((VideoMemory[80*y + x] & 0x0F00) << 4) |
-					((VideoMemory[80*y + x] & 0x00FF)     );
+		if( buffer[1] != 0 || buffer[2] != 0 ) {
+			_handler->onMouseMove( buffer[1], -buffer[2] );		
+		}
 
 		for( uint8_t i = 0; i < 3; i++) {
+			
 			if( (buffer[0] & (0x01 << i)) != (buttons & (0x01 << i))) {
-				VideoMemory[80*y + x] = ((VideoMemory[80*y + x] & 0xF000) >> 4) |
-                                                       ((VideoMemory[80*y + x] & 0x0F00) << 4) |
-                                                       ((VideoMemory[80*y + x] & 0x00FF)     );
+				
+				if( buttons & (0x1 << 1) )
+					_handler->onMouseUp(i+1);
+				else
+					_handler->onMouseDown(i+1);
 			}
 		}
 		buttons = buffer[0];
 	}
-
-	//respond = (respond + 1)%3;
 
 	return esp;
 }
