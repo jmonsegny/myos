@@ -1,12 +1,14 @@
-#include "port.h"
+#include <hardwarecommunication/port.h>
+using namespace myos::common;
+using namespace myos::hardwarecommunication;
 
 // Base
 // -----------------
 
 Port::
-Port( uint16_t portnumber_ )
+Port( uint16_t portnumber )
 {
-	portnumber = portnumber_;
+	_portnumber = portnumber;
 }
 
 Port::
@@ -31,16 +33,16 @@ Port8bit::
 }
 
 void Port8bit::
-Write( uint8_t data )
+write( uint8_t data )
 {
-	asm volatile( "outb %0, %1": : "a" (data), "Nd" (portnumber) );
+	asm volatile( "outb %0, %1": : "a" (data), "Nd" (_portnumber) );
 }
 
 uint8_t Port8bit::
-Read()
+read()
 {
 	uint8_t result;
-	asm volatile( "inb %1, %0": "=a" (result) : "Nd" (portnumber) );
+	asm volatile( "inb %1, %0": "=a" (result) : "Nd" (_portnumber) );
 	return result;
 }
 
@@ -61,10 +63,10 @@ Port8bitSlow::
 }
 
 void Port8bitSlow::
-Write( uint8_t data )
+write( uint8_t data )
 {
         asm volatile( "outb %0, %1\njmp 1f\njmp 1f\n1:": 
-		     : "a" (data), "Nd" (portnumber) );
+		     : "a" (data), "Nd" (_portnumber) );
 }
 
 
@@ -86,16 +88,16 @@ Port16bit::
 }
 
 void Port16bit::
-Write( uint16_t data )
+write( uint16_t data )
 {
-        asm volatile( "outw %0, %1": : "a" (data), "Nd" (portnumber) );
+        asm volatile( "outw %0, %1": : "a" (data), "Nd" (_portnumber) );
 }
 
 uint16_t Port16bit::
-Read()
+read()
 {
         uint16_t result;
-        asm volatile( "inw %1, %0": "=a" (result) : "Nd" (portnumber) );
+        asm volatile( "inw %1, %0": "=a" (result) : "Nd" (_portnumber) );
         return result;
 }
 
@@ -116,16 +118,16 @@ Port32bit::
 }
 
 void Port32bit::
-Write( uint32_t data )
+write( uint32_t data )
 {
-        asm volatile( "outl %0, %1": : "a" (data), "Nd" (portnumber) );
+        asm volatile( "outl %0, %1": : "a" (data), "Nd" (_portnumber) );
 }
 
 uint32_t Port32bit::
-Read()
+read()
 {
         uint32_t result;
-        asm volatile( "inl %1, %0": "=a" (result) : "Nd" (portnumber) );
+        asm volatile( "inl %1, %0": "=a" (result) : "Nd" (_portnumber) );
         return result;
 }
 

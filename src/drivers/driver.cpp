@@ -1,4 +1,6 @@
-#include "driver.h"
+#include <drivers/driver.h>
+using namespace myos::common;
+using namespace myos::drivers;
 
 Driver::
 Driver()

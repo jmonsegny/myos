@@ -1,9 +1,13 @@
-#include "types.h"
-#include "gdt.h"
-#include "interrupts.h"
-#include "driver.h"
-#include "keyboard.h"
-#include "mouse.h"
+#include <common/types.h>
+#include <gdt.h>
+#include <hardwarecommunication/interrupts.h>
+#include <drivers/driver.h>
+#include <drivers/keyboard.h>
+#include <drivers/mouse.h>
+using namespace myos;
+using namespace myos::common;
+using namespace myos::drivers;
+using namespace myos::hardwarecommunication;
 
 void printf( int8_t* str )
 {
@@ -124,7 +128,7 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 
 	printf( "Initializing Hardware, Stage 3\n" );
 
-	interrupts.Activate();
+	interrupts.activate();
 
 	while(1);
 }

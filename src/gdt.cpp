@@ -1,11 +1,13 @@
-#include "gdt.h"
+#include <gdt.h>
+using namespace myos;
+using namespace myos::common;
 
 GlobalDescriptorTable::
 GlobalDescriptorTable()
-:nullSegmentDescriptor(0,0,0),
- unusedSegmentDescriptor(0,0,0),
- codeSegmentDescriptor(0,64*1024*1024,0x9A), // 64 Mb 
- dataSegmentDescriptor(0,64*1024*1024,0x92)  // 64 Mb
+:_nullSegmentDescriptor(0,0,0),
+ _unusedSegmentDescriptor(0,0,0),
+ _codeSegmentDescriptor(0,64*1024*1024,0x9A), // 64 Mb 
+ _dataSegmentDescriptor(0,64*1024*1024,0x92)  // 64 Mb
 {
 	uint32_t i[2];
 	i[1] = (uint32_t)this; // 32 bits because it's a 32 bit OS			       
@@ -19,15 +21,17 @@ GlobalDescriptorTable::
 {
 }
 
-uint16_t GlobalDescriptorTable::DataSegmentSelector()
+uint16_t GlobalDescriptorTable::
+dataSegmentSelector()
 {
-	return (uint8_t*)&dataSegmentDescriptor - (uint8_t*)this; 
+	return (uint8_t*)&_dataSegmentDescriptor - (uint8_t*)this; 
 	// 8 bits because it's relative to the start of the GDT
 }
 
-uint16_t GlobalDescriptorTable::CodeSegmentSelector()
+uint16_t GlobalDescriptorTable::
+codeSegmentSelector()
 {
-        return (uint8_t*)&codeSegmentDescriptor - (uint8_t*)this;
+        return (uint8_t*)&_codeSegmentDescriptor - (uint8_t*)this;
 }
 
 GlobalDescriptorTable::SegmentDescriptor::
@@ -56,7 +60,7 @@ SegmentDescriptor( uint32_t base, uint32_t limit, uint8_t flags )
 }
 
 uint32_t GlobalDescriptorTable::SegmentDescriptor::
-Base()
+base()
 {
 	uint8_t* target = (uint8_t*)this;
 	uint32_t result = target[7];
@@ -67,7 +71,7 @@ Base()
 }
 
 uint32_t GlobalDescriptorTable::SegmentDescriptor::
-Limit()
+limit()
 {
 	uint8_t* target = (uint8_t*)this;
 	uint32_t result = target[6] & 0xF;

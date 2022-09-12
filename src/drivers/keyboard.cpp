@@ -1,4 +1,7 @@
-#include "keyboard.h"
+#include <drivers/keyboard.h>
+using namespace myos::common;
+using namespace myos::drivers;
+using namespace myos::hardwarecommunication;
 
 void printf( int8_t* );
 void printfHex( uint8_t );
@@ -21,8 +24,8 @@ onKeyUp( int8_t c )
 KeyboardDriver::
 KeyboardDriver( InterruptManager* manager, KeyboardEventHandler* handler )
 :InterruptHandler(0x21,manager),
-dataport(0x60),
-commandport(0x64)	
+_dataport(0x60),
+_commandport(0x64)	
 {
 	_handler = handler;
 }
@@ -35,23 +38,23 @@ KeyboardDriver::
 void KeyboardDriver::
 activate()
 {
-	while( commandport.Read() & 0x1 ) {
-        dataport.Read();
+	while( _commandport.read() & 0x1 ) {
+        _dataport.read();
     }
-    commandport.Write(0xAE); // activate
-    commandport.Write(0x20); // get curr state
+    _commandport.write(0xAE); // activate
+    _commandport.write(0x20); // get curr state
 
-    uint8_t status = (dataport.Read() | 1) & ~0x10; // flip
-    commandport.Write(0x60); // set state
-    dataport.Write(status);
+    uint8_t status = (_dataport.read() | 1) & ~0x10; // flip
+    _commandport.write(0x60); // set state
+    _dataport.write(status);
 
-    dataport.Write(0xF4);
+    _dataport.write(0xF4);
 }
 
 uint32_t KeyboardDriver::
-HandleInterrupt( uint32_t esp )
+handleInterrupt( uint32_t esp )
 {
-	uint8_t key = dataport.Read();
+	uint8_t key = _dataport.read();
 
 	if( _handler == 0 )
 		return esp;
