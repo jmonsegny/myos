@@ -51,7 +51,7 @@ deviceHasFunctions( uint16_t bus, uint16_t device )
 }
 
 void PeripheralComponentInterconnectController::
-selectDriver( DriverManager* driverManager )
+selectDriver( DriverManager* driverManager, InterruptManager* interrupts )
 {
 	for( uint16_t bus = 0; bus < 8; bus++ ) {
 		for( uint16_t dev = 0; dev < 32; dev++ ) {
@@ -60,7 +60,17 @@ selectDriver( DriverManager* driverManager )
 				PeripheralComponentInterconnectDeviceDescriptor device = getDeviceDescriptor( bus, dev, fun );
 
 				if( device._vendor_id == 0x0000 || device._vendor_id == 0xFFFF )
-					break;
+					continue;
+
+				for( int barnum = 0; barnum < 6; barnum++ ) {
+					BaseAddressRegister bar = getBaseAddressRegister( bus, dev, fun, barnum );
+					if( bar.address && (bar.type == InputOutput) )
+						device._portBase = (uint32_t)bar.address;
+
+					Driver* driver = getDriver( device, interrupts );
+					if( driver != 0 )
+						driverManager->addDriver( driver );
+				}
 
 				printf( "PCI BUS " );
 				printfHex( bus & 0xFF);
@@ -95,6 +105,69 @@ getDeviceDescriptor( uint16_t bus, uint16_t device, uint16_t function )
     result._interface_id = read( bus, device, function, 0x0A );
     result._revision =     read( bus, device, function, 0x09 );
     result._interrupt =    read( bus, device, function, 0x3C );
+
+	return result;
+}
+
+Driver* PeripheralComponentInterconnectController::
+getDriver( PeripheralComponentInterconnectDeviceDescriptor dev,
+           InterruptManager* interrupts )
+{
+	switch( dev._vendor_id )
+	{
+		case 0x1022: //AMD
+			switch( dev._device_id )
+			{
+				case 0x2000: // amd79c973
+					break;
+			}
+			break;
+		case 0x8086: // Intel
+			break;
+	}
+
+	switch( dev._class_id )
+	{
+		case 0x03: // Graphics
+			switch( dev._subclass_id )
+			{
+				case 0x00: // VGA
+					break;
+			}
+			break;
+	}
+
+	return 0;
+}
+
+BaseAddressRegister PeripheralComponentInterconnectController::
+getBaseAddressRegister( uint16_t bus, uint16_t device, uint16_t function, uint16_t bar )
+{
+	BaseAddressRegister result;
+
+	uint32_t headertype = read( bus, device, function, 0x0E ) & 0x7F;
+	int32_t maxBARs = 6 - (4*headertype);
+	if( bar >= maxBARs )
+		return result;
+
+	uint32_t bar_value = read( bus, device, function, 0x10 + 4*bar ); 
+	result.type = (bar_value & 0x1) ? InputOutput: MemoryMapping;
+	uint32_t temp;
+
+	if( result.type == MemoryMapping ) {
+		// TODO: COMPLETE LATER. See lowlevel.eu PCI
+		switch((bar_value >> 1) &  0x3) {
+			case 0x00: // 32 bits
+				break;
+			case 0x01: // 20 bits
+				break;
+			case 0x10: // 64 bits 
+				break;
+		}
+	} else {
+		result.address = (uint8_t*)( bar_value & ~0x3 );
+		result.prefetchable = false;
+	}
 
 	return result;
 }

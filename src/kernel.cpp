@@ -53,7 +53,10 @@ class PrintfKeyboardEventHandler : public KeyboardEventHandler
 public:
 	void onKeyDown( int8_t c ) override 
 	{
-		printf( &c );
+		int8_t s[2];
+		s[0] = c;
+		s[1] = '\0';
+		printf( s );
 	}
 };
 
@@ -124,7 +127,7 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 	drvManager.addDriver( &mouse );
 
 	PeripheralComponentInterconnectController PCIController;
-	PCIController.selectDriver( &drvManager );
+	PCIController.selectDriver( &drvManager, &interrupts );
 
 	printf( "Initializing Hardware, Stage 2\n" );
 
