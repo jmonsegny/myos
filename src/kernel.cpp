@@ -5,6 +5,7 @@
 #include <drivers/driver.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
+#include <drivers/vga.h>
 using namespace myos;
 using namespace myos::common;
 using namespace myos::drivers;
@@ -129,6 +130,8 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 	PeripheralComponentInterconnectController PCIController;
 	PCIController.selectDriver( &drvManager, &interrupts );
 
+	VideoGraphicsArray vga;
+
 	printf( "Initializing Hardware, Stage 2\n" );
 
 	drvManager.activateAll();	
@@ -136,6 +139,13 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 	printf( "Initializing Hardware, Stage 3\n" );
 
 	interrupts.activate();
+
+	vga.setMode( 320, 200, 8 );
+	for( uint16_t y = 0; y < 200; y++ ){
+		for( uint16_t x = 0; x < 320; x++ ){
+			vga.putPixel( x, y, 0x00, 0x00, 0xA8 );
+		}
+	}
 
 	while(1);
 }
