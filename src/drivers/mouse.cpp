@@ -21,7 +21,7 @@ onMouseUp( uint8_t button )
 }
 
 void MouseEventHandler::
-onMouseMove( int8_t xoff, int8_t yoff )
+onMouseMove( int32_t xoff, int32_t yoff )
 {
 }
 
@@ -50,6 +50,11 @@ activate()
 {
 	_offset = 0;
     _buttons = 0;
+
+	// C
+	if( _handler != 0 )
+    	_handler->onActivate();
+	// C
 
     _commandport.write(0xAB); // activate
     _commandport.write(0x20); // get curr state
@@ -84,14 +89,14 @@ handleInterrupt( uint32_t esp )
 	if( _offset == 0 ) {
 
 		if( _buffer[1] != 0 || _buffer[2] != 0 ) {
-			_handler->onMouseMove( _buffer[1], -_buffer[2] );		
+			_handler->onMouseMove( ((int8_t)_buffer[1]), -((int8_t)_buffer[2]) );
 		}
 
 		for( uint8_t i = 0; i < 3; i++) {
 			
 			if( (_buffer[0] & (0x01 << i)) != (_buttons & (0x01 << i))) {
 				
-				if( _buttons & (0x1 << 1) )
+				if( _buttons & (0x1 << i) )
 					_handler->onMouseUp(i+1);
 				else
 					_handler->onMouseDown(i+1);
@@ -102,3 +107,4 @@ handleInterrupt( uint32_t esp )
 
 	return esp;
 }
+

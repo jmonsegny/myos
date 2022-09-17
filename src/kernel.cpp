@@ -6,10 +6,13 @@
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
 #include <drivers/vga.h>
+#include <gui/desktop.h>
+#include <gui/window.h>
 using namespace myos;
 using namespace myos::common;
 using namespace myos::drivers;
 using namespace myos::hardwarecommunication;
+using namespace myos::gui;
 
 void printf( int8_t* str )
 {
@@ -78,7 +81,7 @@ public:
 
 	}
 
-	void onMouseMove( int8_t xoff, int8_t yoff  ) override 
+	void onMouseMove( int32_t xoff, int32_t yoff  ) override 
 	{
 		static uint16_t* VideoMemory = (uint16_t*)0xB8000;
 
@@ -116,15 +119,19 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 	InterruptManager interrupts( &gdt );
 
 	printf( "Initializing Hardware, Stage 1\n" );
+
+	Desktop desktop( 320, 200, 0x00, 0x00, 0xA8);
 	
 	DriverManager drvManager;
 
-	PrintfKeyboardEventHandler kbhandler;
-	KeyboardDriver keyboard( &interrupts, &kbhandler );
+	//PrintfKeyboardEventHandler kbhandler;
+	//KeyboardDriver keyboard( &interrupts, &kbhandler );
+	KeyboardDriver keyboard( &interrupts, &desktop );
 	drvManager.addDriver( &keyboard );
 
-	MouseToConsole mousehandler; 
-	MouseDriver mouse( &interrupts, &mousehandler );
+	//MouseToConsole mousehandler; 
+	//MouseDriver mouse( &interrupts, &mousehandler );
+	MouseDriver mouse( &interrupts, &desktop );
 	drvManager.addDriver( &mouse );
 
 	PeripheralComponentInterconnectController PCIController;
@@ -138,14 +145,21 @@ extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 
 	printf( "Initializing Hardware, Stage 3\n" );
 
-	interrupts.activate();
+	//interrupts.activate();
 
 	vga.setMode( 320, 200, 8 );
-	for( uint16_t y = 0; y < 200; y++ ){
-		for( uint16_t x = 0; x < 320; x++ ){
-			vga.putPixel( x, y, 0x00, 0x00, 0xA8 );
-		}
-	}
+	//vga.fillRectangle( 0, 0, 320, 200, 0x00, 0x00, 0xA8 );
+	//Desktop desktop( 320, 200, 0x00, 0x00, 0xA8);
+	//desktop.draw( &vga );
+	
+	Window win1( &desktop, 10, 10, 20, 20, 0xA8, 0x00, 0x00 );
+	desktop.addChild( &win1 );
+	Window win2( &desktop, 190, 50, 30, 30, 0x00, 0xA8, 0x00 );
+	desktop.addChild( &win2 );
+	
+	interrupts.activate();
 
-	while(1);
+	while(1){
+		desktop.draw( &vga );
+	}
 }

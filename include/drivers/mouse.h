@@ -18,7 +18,7 @@ namespace myos
 
 		    virtual void onMouseDown( myos::common::uint8_t but );
 		    virtual void onMouseUp( myos::common::uint8_t but );
-			virtual void onMouseMove( myos::common::int8_t xoff, myos::common::int8_t yoff );
+			virtual void onMouseMove( myos::common::int32_t xoff, myos::common::int32_t yoff );
 			virtual void onActivate();
 		};
 

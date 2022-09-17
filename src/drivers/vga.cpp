@@ -77,15 +77,26 @@ getFrameBufferSegment()
 void VideoGraphicsArray::
 putPixel( uint32_t x, uint32_t y, uint8_t colorIndex )
 {
-	uint8_t* pixelAddress = getFrameBufferSegment() + 320*y + x;
+	if( x < 0 || x >= 320 || y < 0 || y >= 200 )
+		return;
+	//uint8_t* pixelAddress = getFrameBufferSegment() + 320*y + x;
+	uint8_t* pixelAddress = _frameBuffer + 320*y + x;
 	*pixelAddress = colorIndex;
 }
 
 uint8_t VideoGraphicsArray::
 getColorIndex( uint8_t r, uint8_t g, uint8_t b )
 {
-	if( r == 0x00 && g == 0x00 && b == 0xA8 )
-		return 0x01;
+	if( r == 0x00 && g == 0x00 && b == 0x00 ) // black
+		return 0x00;
+	if( r == 0x00 && g == 0x00 && b == 0xA8 ) // blue
+        return 0x01;
+	if( r == 0x00 && g == 0xA8 && b == 0x00 ) // green
+        return 0x02;
+	if( r == 0xA8 && g == 0x00 && b == 0x00 ) // red
+        return 0x04;
+	if( r == 0xFF && g == 0xFF && b == 0xFF ) // white
+        return 0x3F;
 	return 0x00; // ?
 }
 
@@ -122,6 +133,7 @@ setMode( uint32_t width, uint32_t height, uint32_t colordepth )
 	};
 
 	writeRegisters(g_320x200x256);
+	_frameBuffer = getFrameBufferSegment();
 	return true;
 }
 
@@ -131,3 +143,17 @@ putPixel( uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b )
 	putPixel( x, y, getColorIndex(r,g,b) );
 }
 
+void VideoGraphicsArray::
+fillRectangle( uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t r, uint8_t g, uint8_t b )
+{
+	uint8_t colorIndex = getColorIndex(r,g,b);
+	for( uint16_t y_ = y; y_ < y+h; y_++ ){
+        for( uint16_t x_ = x; x_ < x+w; x_++ ){
+            //putPixel( x_, y_, r, g, b );
+            if( x < 0 || x >= 320 || y < 0 || y >= 200 )
+        		continue;
+    		uint8_t* pixelAddress = _frameBuffer + 320*y_ + x_;
+    		*pixelAddress = colorIndex;
+        }
+    }
+}

@@ -24,6 +24,8 @@ namespace myos
             myos::hardwarecommunication::Port8bit _attributeControllerWritePort;
             myos::hardwarecommunication::Port8bit _attributeControllerResetPort;
 
+			myos::common::uint8_t* _frameBuffer;
+
 			void writeRegisters( myos::common::uint8_t* registers );
 			myos::common::uint8_t* getFrameBufferSegment();
 	
@@ -55,6 +57,13 @@ namespace myos
 			virtual void putPixel( myos::common::uint32_t x,
                                    myos::common::uint32_t y,
                                    myos::common::uint8_t colorIndex );	
+			virtual void fillRectangle( myos::common::uint32_t x,
+                                        myos::common::uint32_t y,
+                                        myos::common::uint32_t w,
+                                        myos::common::uint32_t h,
+                                        myos::common::uint8_t r,
+                                        myos::common::uint8_t g,
+                                        myos::common::uint8_t b );
 		};		 
 	}
 }
