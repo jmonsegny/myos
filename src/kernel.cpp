@@ -12,7 +12,10 @@ using namespace myos;
 using namespace myos::common;
 using namespace myos::drivers;
 using namespace myos::hardwarecommunication;
+//#define USEGUI
+#ifdef USEGUI
 using namespace myos::gui;
+#endif
 
 void printf( int8_t* str )
 {
@@ -111,55 +114,81 @@ extern "C" void callConstructors()
 		(*i)();
 }
 
+void taskA()
+{
+	while( true )
+		printf("A");
+}
+
+void taskB()
+{
+	while( true )
+		printf("B");	
+}
+
 extern "C" void kernelMain( void* multiboot_structure, uint32_t magicnumber )
 {
 	printf( "Hello World! --- http://www.AlgorithMan.de\n" );
 
 	GlobalDescriptorTable gdt;
-	InterruptManager interrupts( &gdt );
+
+	TaskManager taskManager;
+	Task task1( &gdt, taskA );
+	Task task2( &gdt, taskB );
+	taskManager.addTask( &task1 );
+	taskManager.addTask( &task2 );
+	
+	InterruptManager interrupts( &gdt, &taskManager );
 
 	printf( "Initializing Hardware, Stage 1\n" );
 
+#ifdef USEGUI
 	Desktop desktop( 320, 200, 0x00, 0x00, 0xA8);
+#endif
 	
 	DriverManager drvManager;
 
-	//PrintfKeyboardEventHandler kbhandler;
-	//KeyboardDriver keyboard( &interrupts, &kbhandler );
+#ifndef USEGUI
+	PrintfKeyboardEventHandler kbhandler;
+	KeyboardDriver keyboard( &interrupts, &kbhandler );
+#else
 	KeyboardDriver keyboard( &interrupts, &desktop );
+#endif
 	drvManager.addDriver( &keyboard );
 
-	//MouseToConsole mousehandler; 
-	//MouseDriver mouse( &interrupts, &mousehandler );
+#ifndef USEGUI
+	MouseToConsole mousehandler; 
+	MouseDriver mouse( &interrupts, &mousehandler );
+#else
 	MouseDriver mouse( &interrupts, &desktop );
+#endif
 	drvManager.addDriver( &mouse );
 
 	PeripheralComponentInterconnectController PCIController;
 	PCIController.selectDriver( &drvManager, &interrupts );
-
+#ifdef USEGUI
 	VideoGraphicsArray vga;
-
+#endif
 	printf( "Initializing Hardware, Stage 2\n" );
 
 	drvManager.activateAll();	
 
 	printf( "Initializing Hardware, Stage 3\n" );
 
-	//interrupts.activate();
-
+#ifdef USEGUI
 	vga.setMode( 320, 200, 8 );
-	//vga.fillRectangle( 0, 0, 320, 200, 0x00, 0x00, 0xA8 );
-	//Desktop desktop( 320, 200, 0x00, 0x00, 0xA8);
-	//desktop.draw( &vga );
 	
 	Window win1( &desktop, 10, 10, 20, 20, 0xA8, 0x00, 0x00 );
 	desktop.addChild( &win1 );
 	Window win2( &desktop, 190, 50, 30, 30, 0x00, 0xA8, 0x00 );
 	desktop.addChild( &win2 );
+#endif
 	
 	interrupts.activate();
 
 	while(1){
+#ifdef USEGUI
 		desktop.draw( &vga );
+#endif
 	}
 }

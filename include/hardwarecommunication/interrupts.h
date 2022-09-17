@@ -4,6 +4,7 @@
 #include <common/types.h>
 #include <hardwarecommunication/port.h>
 #include <gdt.h>
+#include <multitasking.h>
 
 namespace myos
 {
@@ -19,6 +20,7 @@ namespace myos
 
 			static InterruptManager* _activeInterruptManager;
 			InterruptHandler* _handlers[256];
+			TaskManager* _taskManager;
 
 			struct GateDescriptor
 			{
@@ -51,9 +53,11 @@ namespace myos
 	        Port8bitSlow _picSlaveData;
 
 		public:
-			InterruptManager( myos::GlobalDescriptorTable *gdt );
+			InterruptManager( myos::GlobalDescriptorTable *gdt,
+                              myos::TaskManager *taskManager );
 			~InterruptManager();	
 
+			//myos::common::uint16_t hardwareInterruptOffset();C 
 			void activate();
 			void deactivate();
 

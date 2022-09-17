@@ -50,11 +50,12 @@ setInterruptDescriptorTableEntry(
 }
 
 InterruptManager::
-InterruptManager( GlobalDescriptorTable *gdt )
+InterruptManager( GlobalDescriptorTable *gdt, TaskManager* taskManager )
 :_picMasterCommand(0x20),
 _picMasterData(0x21),
 _picSlaveCommand(0xA0),
-_picSlaveData(0xA1)
+_picSlaveData(0xA1),
+_taskManager(taskManager)
 {
 	uint16_t codeSegment = gdt->codeSegmentSelector();
 	const uint8_t IDT_INTERRUPT_GATE = 0xE;
@@ -127,6 +128,7 @@ _picSlaveData(0xA1)
 InterruptManager::        
 ~InterruptManager()
 {
+	deactivate();
 }
 
 void InterruptManager::
@@ -166,6 +168,10 @@ doHandleInterrupt( uint8_t interruptNumber, uint32_t esp )
 		printf( "UNHANDLED INTERRUPT 0x" );
 		printfHex( interruptNumber );
 		printf( " " );	
+	}
+
+	if( interruptNumber == 0x20 ) {
+		esp = (uint32_t)_taskManager->schedule( (CPUState*)esp );
 	}
 
 	if( 0x20 <= interruptNumber && interruptNumber < 0x30 ) {
