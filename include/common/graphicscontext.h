@@ -5,10 +5,10 @@
 
 namespace myos
 {
-	namespace common
-	{
-		typedef myos::drivers::VideoGraphicsArray GraphicsContext;
-	}
+namespace common
+{
+typedef myos::drivers::VideoGraphicsArray GraphicsContext;
+}
 }
 
 #endif // __MYOS__COMMON__GRAPHICSCONTEXT_H

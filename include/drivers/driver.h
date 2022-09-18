@@ -5,33 +5,33 @@
 
 namespace myos
 {
-	namespace drivers
-	{
+namespace drivers
+{
 
-		class Driver
-		{
-		public:
-			Driver();
-			~Driver();
-	
-			virtual void activate();
-			virtual myos::common::uint32_t reset();
-			virtual void deactivate();
-		};
+class Driver
+{
+public:
+    Driver();
+    ~Driver();
 
-		class DriverManager
-		{
-		private:
-			Driver* _drivers[256];
-			myos::common::uint32_t _numDrivers;
+    virtual void activate();
+    virtual myos::common::uint32_t reset();
+    virtual void deactivate();
+};
 
-		public:
-			DriverManager();
-			~DriverManager();
-			void addDriver( Driver* );	
-			void activateAll();
-		};
-	}
+class DriverManager
+{
+private:
+    Driver* _drivers[256];
+    myos::common::uint32_t _numDrivers;
+
+public:
+    DriverManager();
+    ~DriverManager();
+    void addDriver( Driver* );
+    void activateAll();
+};
+}
 }
 
 #endif // __MYOS__DRIVERS__DRIVER_H
